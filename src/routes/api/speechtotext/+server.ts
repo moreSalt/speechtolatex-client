@@ -14,17 +14,16 @@ export const POST = async ({request, fetch}) => {
         const reqBody = await request.formData()
         const reqFile = reqBody.get('file')
 
-        await console.log(reqFile)
-        // await console.log(file.)
+        // await console.log(reqFile.type)
+
         if (!reqFile) {
             throw new Error("Missing file upload")
         }
 
-        const file = new Blob([reqFile], { type: 'audio/mpeg' });
-        // const form = new FormData();
-        // form.append('file', new File([file], '/path/to/file/openai.mp3'));
-        // form.append('model', 'whisper-1');
-        // await console.log(file)
+        // @ts-ignore
+        const file = new Blob([reqFile], { type: reqFile.type });
+        // const file = new Blob([reqFile], { type: 'audio/mpeg' });
+
         const formData = new FormData();
         formData.append('file', file, 'test.mp3');
         formData.append('model', 'whisper-1');
@@ -47,7 +46,6 @@ export const POST = async ({request, fetch}) => {
     
         const body = await res.json()
         
-        await console.log(body, res.status)
         if (res.status !== 200) {
             throw new Error(body.error.message)
         }

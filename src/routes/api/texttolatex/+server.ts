@@ -41,7 +41,6 @@ export const POST = async ({request, fetch}) => {
     
         const body = await res.json()
         
-        await console.log(body, res.status)
 
 
         if (res.status !== 200 || body.choices.length < 1) {
@@ -51,7 +50,6 @@ export const POST = async ({request, fetch}) => {
         response.message = "success"
         response.latex = body.choices[0].message.content
 
-        await console.log(response)
         return json(response, {
             status: 201
         })
