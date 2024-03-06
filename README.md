@@ -1,29 +1,21 @@
-# Svektekit Base
+# Speech-to-Latex Web Client
 
-My personal Sveltekit base
+## Install
+1. Clone the repo
+2. Install dependencies `npm install`
+3. Run in dev mode `npm run dev`
 
-## Packages
-```json
-"dependencies": {
-    "@tailwindcss/aspect-ratio": "^0.4.2",
-    "@tailwindcss/forms": "^0.5.7",
-    "@vercel/analytics": "^1.1.3",
-    "@vercel/speed-insights": "^1.0.9",
-    "bits-ui": "^0.17.0",
-    "clsx": "^2.1.0",
-    "mode-watcher": "^0.2.0",
-    "radix-icons-svelte": "^1.2.1",
-    "svelte-sonner": "^0.3.16",
-    "tailwind-merge": "^2.2.1",
-    "tailwind-variants": "^0.1.20"
-}
+Note: .env if using Open AI api key
+```
+PRIVATE_OPENAI_API_KEY="xxxx-xxxx-xxxx"
 ```
 
+## Dependencies
+- Node.js LTS (tested on 20.10.0)
+- npm (tested on 10.2.3)
+
+
 ## TODO
-- [ ] Warning about radix icons
+- [x] Warning about radix icons
 - [ ] Remove unused dependencies
 
-## Technologies
-- Sveltekit (Basically NextJS for Svelte): [Fairly fun and nice tutorial for Svelte](https://learn.svelte.dev/tutorial/welcome-to-svelte)
-- [TailwindCSS (styling)](https://tailwindcss.com/docs/installation)
-- [ShadCN for Svelte (componenets)](https://tailwindcss.com/docs/installation)

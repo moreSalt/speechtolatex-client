@@ -1,15 +1,16 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
+    import { Separator } from "$lib/components/ui/separator";
     import { Input } from "$lib/components/ui/input";
     import * as Collapsible from "$lib/components/ui/collapsible";
-    import { ChevronsUpDown } from "lucide-svelte";
-    import { Sun, Moon, Play, Stop, NotionLogo } from "radix-icons-svelte";
-    import { toggleMode } from "mode-watcher";
+    import { Sun, Moon, CaretSort } from "svelte-radix";
     import { Progress } from "$lib/components/ui/progress";
     import { toast } from "svelte-sonner";
     import { onMount } from 'svelte'
     import Recorder from "$lib/components/ui/recorder.svelte";
-
+    import * as Card from "$lib/components/ui/card";
+    import { page } from '$app/stores';
+    import { Badge } from "$lib/components/ui/badge";
 
     let exampleLatex = "If the sky is blue, then it is not raining.\n\n\\begin{equation}\n\\text{Sky is blue} \\Rightarrow \\text{Not raining}\n\\end{equation}"
 
@@ -22,8 +23,11 @@
     let progress = 0
     let fileName = ""
 
+    let state = "new"
+
 
     async function getSTT() {
+        await console.log(formData)
         const response = await fetch("/api/speechtotext", {
             method: "POST",
             body: formData
@@ -55,11 +59,11 @@
         return body.latex
     }
 
-
+    let audio: any;
     async function handleSubmit(event: { currentTarget: EventTarget & HTMLFormElement }) {
         enabled = true
         formData = new FormData(event.currentTarget)
-
+        state = "converting"
 
         // // Speech to text, with a toast
         await toast.promise(getSTT, {
@@ -74,15 +78,20 @@
                     success: (data) => {
                         progress = 100
                         ttl = data
+                        state = "ready"
                         return "Text has been converted to Latex"
                     },
                     error: (data) => {
+                        enabled = false
+                        state = "new"
                         return `${data}`
                     }
                 })
                 return "Speech has been converted to text"
             },
             error: (data) => {
+                enabled = false
+                state = "new"
                 return `${data}`
             }
         })
@@ -95,19 +104,23 @@
 </script>
 
 
-<div class="flex flex-col justify-between p-4 gap-4 items-center justify-center">
-    <Button on:click={toggleMode} variant="outline" size="icon">
-        <Sun
-            class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-        />
-        <Moon
-            class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-        />
-        <span class="sr-only">Toggle theme</span>
-    </Button>
+<div class="flex flex-col p-4 gap-2 items-center justify-center">
 
-    <Recorder />
-
+    	
+    <div class="self-start flex items-center space-x-4">
+        <h1 class="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-5xl text-green">
+            File: {$page.params.slug}
+        </h1>
+        <Badge>{state}</Badge>
+    </div>
+    	
+    <p class="text-md text-muted-foreground self-start">
+        To start please upload an audio file or record your own audio.
+    </p>
+  
+  
+  
+  
     {#if enabled}
 
         <h2 class="w-full max-w-xl sm:max-w-2xl text-left font-semibold">Converting audio: {progress !== 100 ? `${progress}%` : "Completed"}</h2>
@@ -120,7 +133,7 @@
                     <h4 class="text-sm font-semibold">Speech to text response</h4>
                     <Collapsible.Trigger asChild let:builder>
                     <Button builders={[builder]} variant="outline" size="sm" class="w-9 p-0">
-                        <ChevronsUpDown class="h-4 w-4" />
+                        <CaretSort class="h-4 w-4" />
                         <span class="sr-only">Speech to text response</span>
                     </Button>
                     </Collapsible.Trigger>
@@ -142,7 +155,7 @@
                     <h4 class="text-sm font-semibold">Text to Latex response</h4>
                     <Collapsible.Trigger asChild let:builder>
                     <Button builders={[builder]} variant="outline" size="sm" class="w-9 p-0">
-                        <ChevronsUpDown class="h-4 w-4" />
+                        <CaretSort class="h-4 w-4" />
                         <span class="sr-only">Text to Latex response</span>
                     </Button>
                     </Collapsible.Trigger>
@@ -163,22 +176,31 @@
                 stt = ""
                 enabled = false
                 progress = 0
+                state = "new"
             }} variant="outline">
                 Reset
             </Button>
         {/if}
     {:else} 
-        <form class="flex w-full max-w-xl sm:max-w-2xl items-center space-x-2" on:submit|preventDefault={handleSubmit}>
-            <Input id="audio" name="file" type="file" />
-            <Button type="submit" variant="outline">Submit</Button>
-        </form>
+    
+
+    <form on:submit|preventDefault={handleSubmit} class="w-full sm:max-w-lg">
+        <Card.Root class="w-full sm:max-w-lg">
+            <Card.Header>
+                <Card.Title>Input</Card.Title>
+                <Card.Description>Either record or upload an audio file</Card.Description>
+            </Card.Header>
+            <Card.Content class="flex w-full justify-between items-center">
+                    <Input id="audio" name="file" type="file" bind:value={audio} />
+            </Card.Content>
+            <Card.Footer>
+                <Button class="w-full" type="submit">Submit</Button>
+            </Card.Footer>
+        </Card.Root>
+    </form>
+
+
+     
     {/if}
 
-    <!-- <div class="text-white w-full max-w-xl border h-64">
-        {@html output}
-    </div> -->
-
-
 </div>
-
-

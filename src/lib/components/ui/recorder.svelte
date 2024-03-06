@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Stop, Play } from "radix-icons-svelte";
+    import { Stop, Play } from "svelte-radix"
     import { Button } from "$lib/components/ui/button";
     let enabled = false;
 
@@ -10,19 +10,17 @@
     onMount(async () => {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             try {
-                console.log("getUserMedia supported.");
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                await console.log(stream, "HEY")
             
                 mediaRecorder = new MediaRecorder(stream)
-            mediaRecorder.ondataavailable = (e) => {
-                chunks.push(e.data);
-            };
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
-
-            }
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+                    console.log(blob)
+                }
 
             // await console.log(mediaRecorder)
             } catch (error) {
