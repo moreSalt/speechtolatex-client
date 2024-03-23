@@ -34,13 +34,17 @@
 		"clsx": "^2.1.0",
 		"katex": "^0.16.9",
 		"latex.js": "^0.12.6",
-		"mode-watcher": "^0.2.0",
+		"mode-watcher": "^0.2.2",
+		"paneforge": "^0.0.2",
 		"parse-multipart": "^1.0.4",
+		"svelte-pdf": "^1.0.20",
+		"svelte-pdf-simple": "^2.0.0",
 		"svelte-radix": "^1.0.1",
-		"svelte-sonner": "^0.3.17",
+		"svelte-sonner": "^0.3.19",
 		"svelte-sound": "^0.6.0",
 		"svgdom": "^0.1.19",
 		"tailwind-merge": "^2.2.1",
-		"tailwind-variants": "^0.1.20"
+		"tailwind-variants": "^0.1.20",
+		"vaul-svelte": "^0.3.0"
 	}
 }
