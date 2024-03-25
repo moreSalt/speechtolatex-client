@@ -8,10 +8,16 @@
     import Button from "$lib/components/ui/button/button.svelte";
     import { Sun, Moon } from "svelte-radix";
     import { toggleMode } from "mode-watcher";
+
+
+	import { user, signOut, signIn } from '$lib/stores/auth';
+	import { page } from '$app/stores';
+
+
+
     inject({ mode: dev ? 'development' : 'production' });
     injectSpeedInsights()
 
-    let user = false
     const pages = [
         {
             name: "home",
@@ -67,13 +73,21 @@
                 <span class="sr-only">Toggle theme</span>
             </Button>
     
-            <Button href="/account" class="">
+            <!-- <Button href="/account" class="">
                 {#if user}
                     Account
                 {:else}
                     Signup
                 {/if}
-            </Button>
+            </Button> -->
+
+            {#if $user}
+
+                <Button href="/account">Account</Button>
+                <Button on:click={() => signOut()}>Log out</Button>
+            {:else}
+                <Button on:click={() => signIn()}>Log in</Button>
+            {/if}
         </div>
       </nav>
     

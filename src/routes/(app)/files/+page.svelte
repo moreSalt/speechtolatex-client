@@ -4,6 +4,8 @@
     import Button from "$lib/components/ui/button/button.svelte";
     import * as Table from "$lib/components/ui/table";
     import { Trash } from "svelte-radix";
+    import { onMount } from "svelte";
+    import type { File } from "$lib/types/file";
 
     let data = [
         {
@@ -43,6 +45,8 @@
         },
     ]
 
+    let files: File[] = []
+
     async function deleteElement(id: string) {
         if (!id) {
             throw new Error("id must not be blank")
@@ -74,6 +78,47 @@
         })
     }
 
+    async function getFiles() {
+        try {
+            const res = await fetch("api/files", {
+                method: "GET"
+            })
+            const body = await res.json()
+            files = body
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    async function createFile() {
+        try {
+            const res = await fetch("api/files", {
+                method: "POST"
+            })
+            const body = await res.json()
+            // await console.log("CREATE FILE", body)
+            await getFiles()
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    async function deleteFile(id: string) {
+        try {
+            const res = await fetch(`api/files/${id}`, {
+                method: "DELETE"
+            })
+            const body = await res.json()
+            await getFiles()
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    onMount(async () => {
+        await getFiles()
+    })
+
 
 
   </script>
@@ -85,26 +130,27 @@
         Lorem ipsum
     </p>
 
-    
     <Table.Root>
         <Table.Header>
           <Table.Row>
             <Table.Head class="w-[200px]">Date</Table.Head>
-            <Table.Head>ID</Table.Head>
+            <Table.Head>Title</Table.Head>
             <Table.Head>Summary</Table.Head>
-            <Table.Head class="text-right"><Button size="sm" href="api/files/create">Create</Button></Table.Head>
+            <Table.Head class="text-right">
+                <Button size="sm" on:click={createFile}>Create</Button>
+            </Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-            {#each data as row, index}
+            {#each files as row, index}
             <Table.Row>
-                <Table.Cell>{row.date.split("T")[0]}</Table.Cell>
-                <Table.Cell>{row.id}</Table.Cell>
-                <Table.Cell>{row.summary}</Table.Cell>
+                <Table.Cell>{typeof row.created === "string" ? row.created.split("T")[0] : row.created.toISOString().split("T")[0]}</Table.Cell>
+                <Table.Cell>{row.title}</Table.Cell>
+                <Table.Cell>{row.text}</Table.Cell>
                 <Table.Cell class="text-right flex justify-end space-x-2">
-                    <Button variant="secondary" href="files/{row.id}">Open</Button>
-                    <Button variant="destructive" size="icon" on:click={() => {
-                        handleDelete(row.id)
+                    <Button variant="secondary" size="sm" href="files/{row.id}">Open</Button>
+                    <Button variant="destructive" size="sm" class="aspect-square" on:click={() => {
+                        row.id ? deleteFile(row.id) : "" // throw an error on else
                     }}>
                         <Trash class="h-4 w-4"/>
                     </Button>

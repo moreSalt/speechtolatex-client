@@ -1,36 +1,25 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { Separator } from "$lib/components/ui/separator";
     import { Input } from "$lib/components/ui/input";
-    import * as Collapsible from "$lib/components/ui/collapsible";
-    import { Sun, Moon, CaretSort } from "svelte-radix";
-    import { Progress } from "$lib/components/ui/progress";
+    import type { File } from "$lib/types/file.js";
     import { toast } from "svelte-sonner";
     import { onMount } from "svelte";
-    import Recorder from "$lib/components/ui/recorder.svelte";
     import * as Card from "$lib/components/ui/card";
     import { page } from "$app/stores";
     import { Badge } from "$lib/components/ui/badge";
     import * as Resizable from "$lib/components/ui/resizable";
     import { Textarea } from "$lib/components/ui/textarea";
     import * as Menubar from "$lib/components/ui/menubar/index.js";
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import Reload from "svelte-radix/Reload.svelte";
     import * as Dialog from "$lib/components/ui/dialog";
-    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-    // import PdfViewer from 'svelte-pdf';
-    import { PdfViewer } from "svelte-pdf-simple";
-
+    
     import examplePdf from "$lib/assets/example.pdf";
 
     const env = process.env.NODE_ENV || "development";
 
-    let showBookmarks = false;
-    let showFullURLs = true;
-
-    let value = "pedro";
-
-    let latexText = "";
-    let notPlaying = false;
+    // Is the page mounted yet
+    let mounted = false
 
     // Speech to text
     let stt =
@@ -41,6 +30,9 @@
 
     // Document text
     $: doc = `${ttl}`;
+
+    // Data for the file
+    let file: File
 
     // false until voice to latex is completed
     let initialized = false;
@@ -57,8 +49,11 @@
 
     let dialogTitle = "";
 
+    // URL to the PDF
+    let pdfUrl = examplePdf
+
     // Bypass uploading audio
-    if (env === "development" && true) {
+    if (env === "development" && false) {
         ttl =
             "If the sky is blue, then it is not raining.\n\n\\begin{equation}\n\\text{Sky is blue} \\Rightarrow \\text{Not raining}\n\\end{equation}";
         initialized = true;
@@ -66,8 +61,7 @@
 
     let formData: FormData | null;
 
-    let bookmarks = false;
-    let fullUrls = true;
+
 
     const profileRadioValue = "benoit";
 
@@ -102,6 +96,8 @@
             throw new Error(body.message);
         }
 
+        await patchFile(body.text, "", "")
+
         return body.text;
     }
 
@@ -120,7 +116,80 @@
             throw new Error(body.message);
         }
 
+        await patchFile("", body.latex, "")
+
         return body.latex;
+    }
+
+    // Update a file
+    async function patchFile(text: string, latex: string, title: string) {
+        try {
+        
+            const obj = {}
+            // @ts-expect-error
+            if (text) obj.text = text
+
+            // @ts-expect-error
+            if (latex) obj.latex = latex
+
+            // @ts-expect-error
+            if (title) obj.title = title
+            const res = await fetch(`/api/files/${$page.params.slug}`, {
+                method: "PATCH",
+                body: JSON.stringify(obj)
+            })
+
+            const body: File = await res.json()
+            await console.log(body)
+            // await console.log(body)
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    // Get file from Firestore
+    async function getFile() {
+        try {
+            const res = await fetch(`/api/files/${$page.params.slug}`, {
+                method: "GET"
+            })
+
+            const body: File = await res.json()
+            await console.log(body)
+            file = body
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    async function getPdf() {
+        try {
+            const res = await fetch(`/api/storage?id=${$page.params.slug}`, {
+                method: "GET"
+            })
+
+            const body = await res.json()
+            pdfUrl = body.url
+        } catch (error) {
+            await console.trace(error)
+        }
+    }
+
+    async function createPdf() {
+        try {
+            const res = await fetch(`/api/storage`, {
+                method: "POST",
+                body: JSON.stringify({
+                    latex: file.latex,
+                    id: file.id
+                })
+            })
+
+            const body = await res.json()
+            pdfUrl = body.url
+        } catch (error) {
+            await console.trace(error)
+        }
     }
 
     let audio: any;
@@ -142,6 +211,11 @@
                     loading: "Converting text to Latex...",
                     success: (data) => {
                         ttl = data;
+
+
+                        // // Patch the document
+                        // patchFile()
+
                         converting = false;
                         return "Text has been converted to Latex";
                     },
@@ -160,7 +234,29 @@
             },
         });
     }
+
+    onMount(async () => {
+        await getFile()
+        await getPdf()
+        // await createPdf()
+        mounted = true
+    })
 </script>
+
+
+{#if !mounted}
+
+    <!-- Supposed to be like a loading page -->
+    <div class="flex flex-col items-center justify-center gap-1 w-full grow">
+        <Skeleton class="h-4 w-2/3" />
+        <Skeleton class="h-4 w-2/5" />
+        <Skeleton class="h-4 w-3/5" />
+        <Skeleton class="h-4 w-2/3" />
+        <Skeleton class="h-4 w-2/3" />
+        <Skeleton class="h-4 w-2/3" />
+
+    </div>
+{:else}
 
 
     <Dialog.Root >
@@ -170,20 +266,17 @@
         >
             <div class="self-start flex items-center space-x-4">
                 <h1
-                    class="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
+                    class="scroll-m-20 text-xl font-medium tracking-tight lg:text-3xl"
                 >
-                    File: {$page.params.slug}
+                    {file.title}
                 </h1>
-                {#if !initialized}
+                {#if !file || !file.text || !file.latex}
                     <Badge>new</Badge>
                 {/if}
             </div>
     
-            <!-- <p class="text-md text-muted-foreground self-start">
-            To start please upload an audio file or record your own audio.
-        </p> -->
     
-            {#if initialized}
+            {#if file.latex && file.text}
                 <Menubar.Root class="self-start">
                     <Menubar.Menu>
                         <Menubar.Trigger>File</Menubar.Trigger>
@@ -196,38 +289,11 @@
                                 <Dialog.Trigger
                                     class="w-full text-start"
                                     on:click={() => {
-                                        dialogContent = `${stt}`;
+                                        dialogContent = `${file.text}`;
                                         dialogTitle = "Speech to Text";
                                     }}>Speech to Text</Dialog.Trigger
                                 >
                             </Menubar.Item>
-                            <Menubar.Item>
-                                <Dialog.Trigger
-                                    class="w-full text-start"
-                                    on:click={() => {
-                                        dialogContent = `${ttl}`;
-                                        dialogTitle = "Text to Latex";
-                                    }}>Text to Latex</Dialog.Trigger
-                                >
-                            </Menubar.Item>
-                            <Menubar.Separator />
-                            <Menubar.Item>Share</Menubar.Item>
-                            <Menubar.Separator />
-                            <Menubar.Item>Print</Menubar.Item>
-                        </Menubar.Content>
-                    </Menubar.Menu>
-                    <Menubar.Menu>
-                        <Menubar.Trigger>Edit</Menubar.Trigger>
-                        <Menubar.Content>
-                            <Menubar.Item>
-                                New Tab
-                                <Menubar.Shortcut>⌘T</Menubar.Shortcut>
-                            </Menubar.Item>
-                            <Menubar.Item>New Window</Menubar.Item>
-                            <Menubar.Separator />
-                            <Menubar.Item>Share</Menubar.Item>
-                            <Menubar.Separator />
-                            <Menubar.Item>Print</Menubar.Item>
                         </Menubar.Content>
                     </Menubar.Menu>
                 </Menubar.Root>
@@ -238,7 +304,7 @@
                         <Resizable.PaneGroup direction="horizontal" class="h-full flex flex-col grow">
                             <!-- LEFT SIDE -->
                             <Resizable.Pane class="flex w-full   pr-8">
-                                <Textarea bind:value={doc} class="min-h-96 grow text-xs" />
+                                <Textarea bind:value={file.latex} class="min-h-96 grow text-xs" />
                             </Resizable.Pane>
 
                             
@@ -250,7 +316,7 @@
                             >
                                 <iframe
                                     title="latex pdf"
-                                    src={examplePdf}
+                                    src={pdfUrl}
                                     frameborder="0"
                                     class="w-full h-full rounded"
                                 ></iframe>
@@ -311,5 +377,4 @@
             </Dialog.Header>
         </Dialog.Content>
     </Dialog.Root>
-<!-- </div> -->
-
+{/if}
