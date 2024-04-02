@@ -14,3 +14,15 @@ PRIVATE_OPENAI_API_KEY="xxxx-xxxx-xxxx"
 ## Dependencies
 - Node.js LTS (tested on 20.10.0)
 - npm (tested on 10.2.3)
+
+
+## TODO
+- Right now all requests to the api are made from the client -> sveltekit server side -> python api, would be better if we could just do client -> python api. It's an issue with CORS on the python api side.
+- Needs better defined types
+- Needs better error handling
+- Account page
+- files/[slug] page should be able to save and render using cmd+S
+- Need to add all of the non-content related Latex stuff, right now it's the most basic stuff
+- File title editing
+- Documentation and commenting
+

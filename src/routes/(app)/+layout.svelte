@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { ModeWatcher } from "mode-watcher";
     import "../../app.css";
     import { dev } from '$app/environment';
@@ -8,10 +8,11 @@
     import Button from "$lib/components/ui/button/button.svelte";
     import { Sun, Moon } from "svelte-radix";
     import { toggleMode } from "mode-watcher";
+    import { user, signOut, signIn } from '$lib/stores/auth';
+    import { page } from '$app/stores';
     inject({ mode: dev ? 'development' : 'production' });
     injectSpeedInsights()
 
-    let user = false
     const pages = [
         {
             name: "home",
@@ -33,7 +34,7 @@
     <nav class="w-full flex items-center gap-4 p-4 h-16 border-b mb-4 justify-between">
 
         <!-- Logo -->
-        <h3>Text-to-Latex</h3>
+        <h3>Text to Latex</h3>
     
     
         <!-- Pages -->
@@ -67,13 +68,12 @@
                 <span class="sr-only">Toggle theme</span>
             </Button>
     
-            <Button href="/account" class="">
-                {#if user}
-                    Account
-                {:else}
-                    Signup
-                {/if}
-            </Button>
+            {#if $user}
+
+                <Button on:click={() => signOut()}>Log out</Button>
+            {:else}
+                <Button on:click={() => signIn()}>Log in</Button>
+            {/if}
         </div>
       </nav>
     

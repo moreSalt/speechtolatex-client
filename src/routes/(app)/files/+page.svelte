@@ -1,117 +1,128 @@
 	
 <script lang="ts">
-    import { toast } from "svelte-sonner";
     import Button from "$lib/components/ui/button/button.svelte";
     import * as Table from "$lib/components/ui/table";
-    import { Trash } from "svelte-radix";
+    import { onMount } from "svelte";
+    import type {DefaultApiResponse, File} from "$lib/types/api"
+    import { toast } from "svelte-sonner";
+    import { Skeleton } from "$lib/components/ui/skeleton";
 
-    let data = [
-        {
-            id: "1",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "2",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "3",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "4",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "5",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "6",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-        {
-            id: "7",
-            date: new Date().toISOString(),
-            summary: "lorem ipsum"
-        },
-    ]
 
-    async function deleteElement(id: string) {
-        if (!id) {
-            throw new Error("id must not be blank")
+    let mounted = false
+
+    let files: File[] = []
+
+    async function deleteFile(id: number) {
+        const toastId = await toast.loading("Deleting toast...")
+        try {
+
+            const res = await fetch(`/api/files/${id}`, {
+                method: "DELETE"
+            })
+            if (res.status !== 200) throw new Error("unexpected status code: " + res.status)
+
+            await getFiles()
+            toast.success("Deleted file", { id: toastId })
+        } catch (err) {
+            await console.error(err)
+            toast.success(`Error deleting file: ${err}`, { id: toastId })
+
         }
-
-        const len = data.length
-
-        if (len === 0) {
-            throw new Error("No files found")
-        }
-        data = data.filter(e => e.id !== id)
-        
-        if (data.length === len) {
-            throw new Error("Number of files stayed the same, something went wrong")
-        }
-
-        return id
     }
 
-    function handleDelete(id: string) {
-        toast.promise(() => deleteElement(id), {
-            loading: "Deleting file...",
-            success: (data) => {
-                return `Deleted file ${data}`
-            },
-            error: (data) => {
-                return `Error deleting file: ${data}`
-            }
-        })
+    async function getFiles() {
+        try {
+
+            const res = await fetch(`/api/files`, {
+                method:"GET",
+            })
+            if (res.status !== 200) throw new Error("Unexpected status code " + res.status)
+            const body: File[] = JSON.parse(JSON.stringify(await res.json()))
+            // await console.log(body)
+            files = body
+        } catch (err) {
+            await console.error(err)
+        }
+    }
+
+    async function createFile() {
+        const toastId = toast.loading("Creating new file...")
+        try {
+
+            
+            const res = await fetch(`/api/files`, {
+                method:"POST",
+            })
+
+            if (res.status !== 201) throw new Error("Unexpected status code " + res.status)
+            const body: DefaultApiResponse = JSON.parse(JSON.stringify(await res.json()))
+            await getFiles()
+            toast.success("Created new file", { id: toastId })
+        } catch (err) {
+            await console.error(err)
+            toast.error(`Error creating new file: ${err}`, { id: toastId })
+        }
     }
 
 
+
+    onMount(async () => {
+        await getFiles()
+        mounted = true
+    })
 
   </script>
   
 <div class="flex flex-col space-y-4 select-none">
     <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Files</h1>
-    	
-    <p class="leading-7 [&:not(:first-child)]:mt-6">
-        Lorem ipsum
-    </p>
-
-    
     <Table.Root>
         <Table.Header>
           <Table.Row>
-            <Table.Head class="w-[200px]">Date</Table.Head>
-            <Table.Head>ID</Table.Head>
-            <Table.Head>Summary</Table.Head>
-            <Table.Head class="text-right"><Button size="sm" href="api/files/create">Create</Button></Table.Head>
+            <Table.Head class="w-sm">Date</Table.Head>
+            <Table.Head>Title</Table.Head>
+            <Table.Head class="text-right"><Button size="sm" on:click={async () => {
+                await createFile()
+            }}>Create</Button></Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-            {#each data as row, index}
-            <Table.Row>
-                <Table.Cell>{row.date.split("T")[0]}</Table.Cell>
-                <Table.Cell>{row.id}</Table.Cell>
-                <Table.Cell>{row.summary}</Table.Cell>
-                <Table.Cell class="text-right flex justify-end space-x-2">
-                    <Button variant="secondary" href="files/{row.id}">Open</Button>
-                    <Button variant="destructive" size="icon" on:click={() => {
-                        handleDelete(row.id)
-                    }}>
-                        <Trash class="h-4 w-4"/>
-                    </Button>
-                
-                </Table.Cell>
-              </Table.Row>
-            {/each}
+
+            {#if mounted}
+                {#each files as file, index}
+                    <Table.Row>
+                        <Table.Cell>{file.created}</Table.Cell>
+                        <Table.Cell >{file.title}</Table.Cell>
+                        <Table.Cell class="text-right flex justify-end space-x-2">
+                            <Button variant="secondary" size="sm" href="files/{file.id}">Open</Button>
+                            <Button variant="destructive" size="sm" on:click={() => {
+                                // handleDelete(file.id)
+                                deleteFile(file.id)
+                            }}>
+                                Delete
+                            </Button>
+                        
+                        </Table.Cell>
+                    </Table.Row>
+                {/each}
+            {:else}
+                {#each [1,1,1,1,1,1,1,1,1,1,1,1,1] as i}
+                <Table.Row>
+                    <Table.Cell>
+
+                        <Skeleton class="h-5 w-[200px] rounded-full" />
+                    </Table.Cell>
+                    <Table.Cell>
+                        <Skeleton class="h-5 w-[200px] rounded-full" />
+
+                    </Table.Cell>
+                    <Table.Cell class="text-right flex justify-end space-x-2">
+                        <Skeleton class="h-5 w-[100px] rounded-full" />
+                        <Skeleton class="h-5 w-[100px] rounded-full" />
+                    
+                    </Table.Cell>
+                </Table.Row>
+                {/each}
+            {/if}
         </Table.Body>
       </Table.Root>
 </div>
