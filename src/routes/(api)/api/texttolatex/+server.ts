@@ -28,7 +28,7 @@ export const POST = async ({request, fetch}) => {
                     "messages": [
                         {
                             "role": "system",
-                            "content": "Your job is to convert plain text to the Latex format. This should include all of the requirements a Latex file has to properly render."
+                            "content": "Your job is to convert plain text to the Latex format. Assume the text provided is from the audio of a lecutre, and it should be structured in that way. Look out for keywords that Latex has and use them accordingly. This should include all of the requirements a Latex file has to properly render."
                         },
                         {
                             "role": "user",

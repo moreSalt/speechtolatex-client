@@ -8,16 +8,14 @@
     import { Badge } from "$lib/components/ui/badge";
     import * as Resizable from "$lib/components/ui/resizable";
     import { Textarea } from "$lib/components/ui/textarea";
-    import * as Menubar from "$lib/components/ui/menubar/index.js";
     import Reload from "svelte-radix/Reload.svelte";
-    import * as Dialog from "$lib/components/ui/dialog";
     import type { File, DefaultApiResponse } from "$lib/types/api";
     import { Skeleton } from "$lib/components/ui/skeleton";
+    import { PUBLIC_API_URL } from "$env/static/public";
 
-    import examplePdf from "$lib/assets/example.pdf";
 
     const env = process.env.NODE_ENV || "development";
-
+    export let data;
     // Speech to text
     let stt =
         "It's good, right? This is absolutely beautiful. Thank you. Thank you, Christopher. What do you think of this one? I am... You can do better. I think I can do better.";
@@ -57,23 +55,6 @@
 
     let formData: FormData | null;
 
-    // Handle keypresses
-    const onKeyDown = async (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-            e.preventDefault();
-            // render = doc
-            handleRender();
-        }
-    };
-
-    // Handles all of rendering latex to pdf
-    async function handleRender() {
-        // try {
-        //     render = doc;
-        // } catch (error) {
-        //     console.log(error);
-        // }
-    }
 
     // Convert speech to text
     async function getSTT() {
@@ -136,16 +117,26 @@
     // Update the rows data
     async function updateRow(title: string, text: string, latex: string) {
         try {
-            const res = await fetch(`/api/files/${$page.params.slug}`, {
+
+            // !TODO: make this server side?
+            if (!latex.includes("documentclass{article}")) {
+                latex = `\\documentclass{article}\\begin{document}${latex}\\end{document}`
+            }
+
+            const res = await fetch(`${PUBLIC_API_URL}/files/${$page.params.slug}`, {
                 method: "PATCH",
+                headers: {
+                    Authorization: `Bearer ${data.token}`,
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
                     title,
-                    text,
                     latex,
-                }),
-            });
-            if (res.status !== 200)
-                throw new Error("unexpected status code: " + res.status);
+                    text
+                })
+            })
+            const body = await res.json()
+            if (res.status !== 200) throw new Error(body.error ? body.error : res.statusText)
         } catch (err) {
             await console.error(err);
             return `${err}`;
@@ -214,17 +205,21 @@
 
     async function getFile() {
         try {
-            const res = await fetch(`/api/files/${$page.params.slug}`, {
+
+            const res = await fetch(`${PUBLIC_API_URL}/files/${$page.params.slug}`, {
                 method: "GET",
-            });
+                headers: {
+                    Authorization: `Bearer ${data.token}`,
+                }
+            })
 
-            const body: File = await res.json();
-            if (res.status !== 200)
-                throw new Error(`unexpected status code: ${res.status}`);
 
-            await console.dir(file);
+            const body: File = await res.json()
 
+            // !TODO have an error response
+            if (res.status != 200) throw new Error(res.statusText)
             file = body;
+
         } catch (err) {
             await console.error(err);
             return `${err}`;
@@ -233,8 +228,11 @@
 
     async function getPdf() {
         try {
-            const res = await fetch(`/api/storage/${$page.params.slug}`, {
+            const res = await fetch(`${PUBLIC_API_URL}/storage/${$page.params.slug}`, {
                 method: "GET",
+                headers: {
+                    Authorization: `Bearer ${data.token}`,
+                }
             });
 
             const body: DefaultApiResponse = await res.json();
@@ -252,9 +250,14 @@
 
     async function updatePdf() {
         try {
-            const res = await fetch(`/api/storage/${$page.params.slug}`, {
+            const res = await fetch(`${PUBLIC_API_URL}/storage`, {
                 method: "POST",
+                headers: {
+                    Authorization: `Bearer ${data.token}`,
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
+                    id: parseInt($page.params.slug),
                     latex: file.latex,
                 }),
             });
@@ -266,7 +269,7 @@
             }
 
             // pdfUrl = `${body.url}`;
-            pdfUrl = ""
+            // pdfUrl = ""
             pdfUrl = `${pdfUrl}`
 
         } catch (error) {
@@ -327,14 +330,16 @@
     });
 </script>
 
-<!-- <Dialog.Root > -->
-<!-- ADD A CONTEXT MENU TO BE ABLE TO RIGHT CLICK ON SHIT -->
 <div class="flex flex-col grow gap-4 items-center">
     <div class="self-start flex items-center space-x-4">
         <h1
             class="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
         >
-            File: {file ? file.title : $page.params.slug}
+            {#if file}
+                <Input type="email" bind:value={file.title} class="max-w-xs" />
+            {:else}
+                Loading...
+            {/if}
         </h1>
         {#if !file || !file.text || !file.latex}
             <Badge>new</Badge>
@@ -427,14 +432,3 @@
     {/if}
 </div>
 
-<!-- <Dialog.Content>
-            <Dialog.Header>
-                <Dialog.Title>{dialogTitle}</Dialog.Title>
-                <Dialog.Description>
-                    <Textarea disabled value={dialogContent} class="min-h-36 mt-4"
-                    ></Textarea>
-                </Dialog.Description>
-            </Dialog.Header>
-        </Dialog.Content>
-    </Dialog.Root> -->
-<!-- </div> -->

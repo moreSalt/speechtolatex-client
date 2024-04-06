@@ -12,4 +12,5 @@ export interface DefaultApiResponse {
     message: string
     id?: number | string
     url?: string
+    error?: string
 }
