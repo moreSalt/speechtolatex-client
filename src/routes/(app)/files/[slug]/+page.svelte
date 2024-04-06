@@ -330,14 +330,16 @@
     });
 </script>
 
-<!-- <Dialog.Root > -->
-<!-- ADD A CONTEXT MENU TO BE ABLE TO RIGHT CLICK ON SHIT -->
 <div class="flex flex-col grow gap-4 items-center">
     <div class="self-start flex items-center space-x-4">
         <h1
             class="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
         >
-            {file ? file.title : $page.params.slug}
+            {#if file}
+                <Input type="email" bind:value={file.title} class="max-w-xs" />
+            {:else}
+                Loading...
+            {/if}
         </h1>
         {#if !file || !file.text || !file.latex}
             <Badge>new</Badge>
@@ -430,14 +432,3 @@
     {/if}
 </div>
 
-<!-- <Dialog.Content>
-            <Dialog.Header>
-                <Dialog.Title>{dialogTitle}</Dialog.Title>
-                <Dialog.Description>
-                    <Textarea disabled value={dialogContent} class="min-h-36 mt-4"
-                    ></Textarea>
-                </Dialog.Description>
-            </Dialog.Header>
-        </Dialog.Content>
-    </Dialog.Root> -->
-<!-- </div> -->
