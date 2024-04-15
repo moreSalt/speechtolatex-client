@@ -10,6 +10,7 @@
     import { toggleMode } from "mode-watcher";
     import { user, signOut, signIn } from '$lib/stores/auth';
     import { page } from '$app/stores';
+    import { toast } from "svelte-sonner";
     inject({ mode: dev ? 'development' : 'production' });
     injectSpeedInsights()
 
@@ -23,6 +24,11 @@
             location: "/files"
         }
     ]
+
+    async function signOutHandler() {
+        await signOut()
+        await toast.info("You have been logged out")
+    }
   </script>
 
 
@@ -70,7 +76,7 @@
     
             {#if $user}
 
-                <Button on:click={() => signOut()}>Log out</Button>
+                <Button on:click={() => signOutHandler()}>Log out</Button>
             {:else}
                 <Button on:click={() => signIn()}>Log in</Button>
             {/if}
