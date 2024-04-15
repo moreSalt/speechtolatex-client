@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit'
-import { PRIVATE_OPENAI_API_KEY } from '$env/static/private';
+import { PRIVATE_OPENAI_API_KEY, PRIVATE_STT_API } from '$env/static/private';
+
+
 // import multipart from "parse-multipart"
 export const POST = async ({request, fetch}) => {
     let response = {
@@ -25,16 +27,24 @@ export const POST = async ({request, fetch}) => {
         // const file = new Blob([reqFile], { type: 'audio/mpeg' });
 
         const formData = new FormData();
-        formData.append('file', file, 'test.mp3');
-        formData.append('model', 'whisper-1');
+
+        // OPEN AI
+        // formData.append('file', file, 'test.mp3');
+        // formData.append('model', 'whisper-1');
+
+        // NOT USED
         // formData.append('language', 'en');
+
+        // OUR OWN STT
+        formData.append("audio", file, "test.mp3")
 
         const otherBody = JSON.stringify({
             file: file,
             model: "whisper-1"
         })
 
-        const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        const res = await fetch(`${PRIVATE_STT_API}/transcribe`, {
+        // const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${PRIVATE_OPENAI_API_KEY}`,

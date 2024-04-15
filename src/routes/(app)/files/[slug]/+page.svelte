@@ -32,13 +32,6 @@
     // Binded value for mp3 file
     let audio: any;
 
-    // The value on the right hand / rendered side
-    let render =
-        "Dehydration is your worst enemy. Drink up while this page loads.";
-
-    // Dialog box title and content, this changes as I cant figure out a cleaner way to change data
-    let dialogTitle: string = "";
-    let dialogContent: string = "";
 
     // table row
     let file: File;
