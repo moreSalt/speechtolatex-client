@@ -184,6 +184,8 @@
             // Update pdf
             await updatePdf()
 
+            await getPdf()
+
             await toast.success("Successfully converted audio to Latex", {
                 id: toastId,
             });
@@ -329,7 +331,7 @@
             class="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
         >
             {#if file}
-                <Input type="email" bind:value={file.title} class="max-w-xs" />
+                <Input type="text" bind:value={file.title} class="max-w-xs" />
             {:else}
                 Loading...
             {/if}
