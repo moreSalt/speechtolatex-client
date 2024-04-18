@@ -151,7 +151,7 @@
                 throw new Error(textRes.error);
             }
 
-            await toast.loading("Converting text to Latex", {
+            await toast.loading("Converting text to LaTeX", {
                 id: toastId,
             });
 
@@ -186,7 +186,7 @@
 
             await getPdf()
 
-            await toast.success("Successfully converted audio to Latex", {
+            await toast.success("Successfully converted audio to LaTeX", {
                 id: toastId,
             });
         } catch (err) {

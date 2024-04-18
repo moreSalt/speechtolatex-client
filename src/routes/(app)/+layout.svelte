@@ -40,7 +40,7 @@
     <nav class="w-full flex items-center gap-4 p-4 h-16 border-b mb-4 justify-between">
 
         <!-- Logo -->
-        <h3>Speech to Latex</h3>
+        <h3>Speech to LaTeX</h3>
     
     
         <!-- Pages -->
