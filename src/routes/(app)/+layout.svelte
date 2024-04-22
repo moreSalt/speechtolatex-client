@@ -66,7 +66,7 @@
             <span class="sr-only">Toggle theme</span>
         </Button>
 
-        <Button href="/account" class="">
+        <Button href="/account/signup" class="">
             {#if user}
                 Account
             {:else}
